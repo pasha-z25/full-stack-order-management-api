@@ -9,7 +9,7 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD || 'admin',
   database: process.env.DB_NAME || 'dev_db',
   synchronize: process.env.NODE_ENV !== 'production',
-  logging: process.env.NODE_ENV === 'development',
+  logging: false, // process.env.NODE_ENV === 'development',
   entities: [User, Product, Order, OrderItem],
   extra: {
     max: 10,

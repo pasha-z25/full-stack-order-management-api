@@ -111,4 +111,11 @@ export async function seedDatabase(clearPrevious?: boolean) {
   }
 
   console.log('ℹ️ Orders created:', savedOrders);
+
+  await AppDataSource.destroy();
 }
+
+seedDatabase().catch((error) => {
+  console.error('❌ Error seeding database:', error);
+  process.exit(1);
+});
