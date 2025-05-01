@@ -1,0 +1,30 @@
+{
+  "name": "fullstack-order-management-api",
+  "description": "A full-stack application with a Node.js/TypeScript backend (TypeORM, PostgreSQL, Express) and a React frontend. Deployed via Docker and tested with Jest",
+  "version": "0.1.0",
+  "private": true,
+  "author": "Pavlo Zubal pashazubak@gmail.com",
+  "license": "ISC",
+  "keywords": [],
+  "scripts": {
+    "dev": "lerna run dev --parallel",
+    "start": "lerna run start --parallel",
+    "build": "lerna run build --parallel",
+    "pretty": "npx prettier . --write",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "lerna": "^8.2.2"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.1",
+    "prettier": "^3.5.3",
+    "prettier-plugin-organize-imports": "^4.1.0",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "typescript": "^5.8.3"
+  },
+  "lint-staged": {
+    "**/*": "prettier . --write --ignore-unknown"
+  }
+}

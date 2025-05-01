@@ -1,0 +1,19 @@
+services:
+  # web:
+  #   build: ./web
+  #   image: next_js
+
+  # server:
+  #   build: ./server
+  #   image: express_js
+
+  # db:
+  #   image: postgres:15
+
+networks:
+  app_network:
+    driver: bridge
+    name: local_docker_app_network
+
+volumes:
+  pg_data:
