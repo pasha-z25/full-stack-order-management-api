@@ -1,6 +1,8 @@
 import cors from 'cors';
 import express from 'express';
 import 'express-async-errors';
+import { rateLimiter } from './middlewares/rateLimit';
+import { ordersRoutes, productsRoutes, usersRoutes } from './routes';
 import { getRequestInfo } from './utils/helpers';
 import logger from './utils/logger';
 
@@ -19,6 +21,10 @@ app.options('*', cors(corsOptions));
 app.get('/', function (_req, res) {
   res.send('Hello World');
 });
+
+app.use('/orders', rateLimiter, ordersRoutes);
+app.use('/users', rateLimiter, usersRoutes);
+app.use('/products', rateLimiter, productsRoutes);
 
 app.use((req: express.Request, res: express.Response) => {
   logger.warn('⚠️ Route not found', { requestInfo: getRequestInfo(req) });
