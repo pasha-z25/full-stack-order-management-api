@@ -1,6 +1,7 @@
+import type { Request, Response } from 'express';
+
 import { UserService } from '@/services/userService';
 import logger from '@/utils/logger';
-import type { Request, Response } from 'express';
 
 export const getAllUsers = async (
   _req: Request,
@@ -21,11 +22,15 @@ export const getAllUsers = async (
       status: 'success',
       data: users,
     });
-  } catch (error: any) {
-    logger.error('❌ Error retrieving users', { error: error.message });
+  } catch (error: unknown) {
+    const unknownError = new Error('Unknown error occurred');
+    const errorMessage =
+      error instanceof Error ? error.message : String(unknownError);
+
+    logger.error('❌ Error retrieving users', { error: errorMessage });
     res.status(500).json({
       status: 'error',
-      message: error.message || 'Internal server error',
+      message: errorMessage || 'Internal server error',
     });
   }
 };
@@ -51,11 +56,15 @@ export const getUserById = async (
       status: 'success',
       data: user,
     });
-  } catch (error: any) {
-    logger.error('❌ Error retrieving user', { error: error.message });
+  } catch (error: unknown) {
+    const unknownError = new Error('Unknown error occurred');
+    const errorMessage =
+      error instanceof Error ? error.message : String(unknownError);
+
+    logger.error('❌ Error retrieving user', { error: errorMessage });
     res.status(500).json({
       status: 'error',
-      message: error.message || 'Internal server error',
+      message: errorMessage || 'Internal server error',
     });
   }
 };

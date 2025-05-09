@@ -1,6 +1,7 @@
+import type { Request, Response } from 'express';
+
 import { ProductService } from '@/services/productService';
 import logger from '@/utils/logger';
-import type { Request, Response } from 'express';
 
 export const getAllProducts = async (
   _req: Request,
@@ -21,11 +22,15 @@ export const getAllProducts = async (
       status: 'success',
       data: products,
     });
-  } catch (error: any) {
-    logger.error('❌ Error retrieving products', { error: error.message });
+  } catch (error: unknown) {
+    const unknownError = new Error('Unknown error occurred');
+    const errorMessage =
+      error instanceof Error ? error.message : String(unknownError);
+
+    logger.error('❌ Error retrieving products', { error: errorMessage });
     res.status(500).json({
       status: 'error',
-      message: error.message || 'Internal server error',
+      message: errorMessage || 'Internal server error',
     });
   }
 };

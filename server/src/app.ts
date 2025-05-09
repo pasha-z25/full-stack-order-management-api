@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import 'express-async-errors';
+
 import { rateLimiter } from './middlewares/rateLimit';
 import { ordersRoutes, productsRoutes, usersRoutes } from './routes';
 import { getRequestInfo } from './utils/helpers';
@@ -31,12 +32,16 @@ app.use((req: express.Request, res: express.Response) => {
   res.status(404).json({ status: 'error', message: 'Route not found' });
 });
 
-app.use((err: any, req: express.Request, res: express.Response) => {
+app.use((err: unknown, req: express.Request, res: express.Response) => {
+  const unknownError = new Error('Unknown error occurred');
+  const errorMessage =
+    err instanceof Error ? err.message : String(unknownError);
   logger.error('❌ Unhandled error', {
-    error: err.message,
+    error: errorMessage,
     requestInfo: getRequestInfo(req),
   });
-  res
-    .status(500)
-    .json({ status: 'error', message: err.message || 'Internal server error' });
+  res.status(500).json({
+    status: 'error',
+    message: errorMessage || 'Internal server error',
+  });
 });

@@ -1,26 +1,53 @@
-node_modules# See http://help.github.com/ignore-files/ for more about ignoring files.
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# Dependency directories
+# https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
+node_modules
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
 # System Files
 Thumbs.db
 .DS_Store
 __MACOSX
+*.pem
 
 # IDE and editors
 .idea
 .vscode
 
 # Compiled output
+/build
 /dist
 /tmp
 
-# Logs
+# next.js
+/.next/
+/out/
+
+# vercel
+.vercel
+
+# testing
+/coverage
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs & debugging
 /logs
 *.log
 npm-debug.log*
-
-# Dependency directories
-# https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
-/node_modules
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
 # Lock files
 # https://stackoverflow.com/questions/45022048/why-does-npm-install-rewrite-package-lock-json
@@ -30,3 +57,4 @@ package-lock.json
 
 # dotenv environment variables file
 .env
+.env.local

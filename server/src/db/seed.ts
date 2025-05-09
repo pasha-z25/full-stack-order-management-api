@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { Repository } from 'typeorm';
+
 import { AppDataSource, initializeDataSource } from '.';
 import { Order, Product, User } from './entities';
 import { products, users } from './mock';
@@ -49,7 +50,7 @@ const createProduct = (product: Partial<Product>) =>
     stock: getRandomInt(minStockQuantity, maxStockQuantity),
   });
 
-const createOrder = () => {};
+// const createOrder = () => {};
 
 export async function seedDatabase(clearPrevious?: boolean) {
   await initializeDataSource();
@@ -94,7 +95,7 @@ export async function seedDatabase(clearPrevious?: boolean) {
   ];
 
   const savedOrders: Order[] = [];
-  const orderService = new OrderService();
+  const orderService = new OrderService(AppDataSource);
 
   for (const orderData of ordersData) {
     try {
@@ -103,9 +104,13 @@ export async function seedDatabase(clearPrevious?: boolean) {
         savedOrders.push(order);
       }
       console.log(`ℹ️ Order updated/created for user ${order.user.id}:`, order);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const unknownError = new Error('Unknown error occurred');
+      const errorMessage =
+        error instanceof Error ? error.message : String(unknownError);
+
       console.warn(
-        `⚠️ Failed to create/update order for user ${orderData.userId}: ${error.message}`
+        `⚠️ Failed to create/update order for user ${orderData.userId}: ${errorMessage}`
       );
     }
   }

@@ -1,14 +1,10 @@
 import { USER_AVATAR_SOURCE } from '@/utils/constants';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+
 import { Product, User } from './entities';
 
 dayjs.extend(customParseFormat);
-
-const ONE_YEAR_IN_MS = 31536000000;
-
-const currentTime = new Date().getTime();
-const startTime = currentTime - ONE_YEAR_IN_MS;
 
 export const users: Partial<User>[] = [
   {
