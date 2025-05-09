@@ -3,12 +3,54 @@ services:
   #   build: ./web
   #   image: next_js
 
-  # server:
-  #   build: ./server
-  #   image: express_js
+  server:
+    build: ./server
+    image: express_js
+    container_name: backend_server
+    ports:
+      - '8888:8888'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8888']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres_db_server
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+      - DB_NAME=dev_db
+    networks:
+      - app_network
+    command: npm run docker
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    restart: on-failure
 
-  # db:
-  #   image: postgres:15
+  db:
+    image: postgres:15
+    container_name: postgres_db_server
+    restart: always
+    stop_grace_period: 30s
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: dev_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - app_network
 
 networks:
   app_network:
