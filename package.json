@@ -11,18 +11,28 @@
     "start": "lerna run start --parallel",
     "build": "lerna run build --parallel",
     "pretty": "npx prettier . --write",
+    "lint": "npx eslint .",
+    "lint:fix": "npx eslint . --fix",
+    "check": "npm run pretty && npm run lint:fix",
     "prepare": "husky"
   },
   "dependencies": {
     "lerna": "^8.2.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.26.0",
+    "eslint": "^9.26.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-perfectionist": "^4.12.3",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.1.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.1",
     "prettier": "^3.5.3",
     "prettier-plugin-organize-imports": "^4.1.0",
     "prettier-plugin-tailwindcss": "^0.6.11",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.0"
   },
   "lint-staged": {
     "**/*": "prettier . --write --ignore-unknown"

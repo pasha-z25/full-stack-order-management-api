@@ -1,5 +1,6 @@
 import dotenvFlow from 'dotenv-flow';
 import 'reflect-metadata';
+
 import { app } from './app';
 import { initializeDataSource } from './db';
 import { createDatabaseIfNotExists } from './utils/createDatabase';

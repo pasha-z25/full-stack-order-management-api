@@ -1,4 +1,5 @@
 import type { Request } from 'express';
+
 import os from 'os';
 
 export const getRequestInfo = (req: Request) => ({
