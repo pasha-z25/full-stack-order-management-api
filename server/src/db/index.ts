@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+
 import { Order, OrderItem, Product, User } from './entities';
 
 export const AppDataSource = new DataSource({
@@ -27,10 +28,14 @@ export async function initializeDataSource(retries = 5, delay = 5000) {
       await AppDataSource.initialize();
       console.log('📦 Database initialized successfully');
       return;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const unknownError = new Error('Unknown error occurred');
+      const errorMessage =
+        error instanceof Error ? error.message : String(unknownError);
+
       console.error(
         `🔄 Failed to initialize database (attempt ${i + 1}/${retries}):`,
-        error.message
+        errorMessage
       );
       if (i === retries - 1) throw error;
       await new Promise((resolve) => setTimeout(resolve, delay));

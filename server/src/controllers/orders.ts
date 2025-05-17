@@ -1,6 +1,8 @@
+import type { NextFunction, Request, Response } from 'express';
+
+import { AppDataSource } from '@/db';
 import { OrderService } from '@/services/orderService';
 import logger from '@/utils/logger';
-import type { NextFunction, Request, Response } from 'express';
 
 export const addOrder = async (
   req: Request,
@@ -22,7 +24,7 @@ export const addOrder = async (
   }
 
   try {
-    const orderService = new OrderService();
+    const orderService = new OrderService(AppDataSource);
 
     const order = await orderService.addToOrder({
       userId,
@@ -40,27 +42,31 @@ export const addOrder = async (
       status: 'success',
       data: order,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const unknownError = new Error('Unknown error occurred');
+    const errorMessage =
+      error instanceof Error ? error.message : String(unknownError);
+
     logger.error('❌ Error adding to order', {
-      error: error.message,
+      error: errorMessage,
       userId,
       productId,
     });
 
-    if (error.message.includes('User not found')) {
+    if (errorMessage.includes('User not found')) {
       res.status(404).json({ status: 'error', message: 'User not found' });
       return;
     }
-    if (error.message.includes('Product not found')) {
+    if (errorMessage.includes('Product not found')) {
       res.status(404).json({ status: 'error', message: 'Product not found' });
       return;
     }
-    if (error.message.includes('Insufficient stock')) {
-      res.status(403).json({ status: 'error', message: error.message });
+    if (errorMessage.includes('Insufficient stock')) {
+      res.status(403).json({ status: 'error', message: errorMessage });
       return;
     }
-    if (error.message.includes('Insufficient balance')) {
-      res.status(403).json({ status: 'error', message: error.message });
+    if (errorMessage.includes('Insufficient balance')) {
+      res.status(403).json({ status: 'error', message: errorMessage });
       return;
     }
     next(error);
@@ -89,7 +95,7 @@ export const removeFromOrder = async (
   }
 
   try {
-    const orderService = new OrderService();
+    const orderService = new OrderService(AppDataSource);
 
     const updatedOrder = await orderService.removeFromOrder(orderId, productId);
 
@@ -111,18 +117,22 @@ export const removeFromOrder = async (
       status: 'success',
       data: updatedOrder,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const unknownError = new Error('Unknown error occurred');
+    const errorMessage =
+      error instanceof Error ? error.message : String(unknownError);
+
     logger.error('❌ Error removing product from order', {
-      error: error.message,
+      error: errorMessage,
       orderId,
       productId,
     });
 
-    if (error.message.includes('Order not found')) {
+    if (errorMessage.includes('Order not found')) {
       res.status(404).json({ status: 'error', message: 'Order not found' });
       return;
     }
-    if (error.message.includes('Product not found in order')) {
+    if (errorMessage.includes('Product not found in order')) {
       res
         .status(404)
         .json({ status: 'error', message: 'Product not found in order' });
@@ -157,7 +167,7 @@ export const updateQuantity = async (
   }
 
   try {
-    const orderService = new OrderService();
+    const orderService = new OrderService(AppDataSource);
 
     const updatedOrder = await orderService.updateQuantity(
       orderId,
@@ -175,33 +185,37 @@ export const updateQuantity = async (
       status: 'success',
       data: updatedOrder,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const unknownError = new Error('Unknown error occurred');
+    const errorMessage =
+      error instanceof Error ? error.message : String(unknownError);
+
     logger.error('❌ Error updating quantity', {
-      error: error.message,
+      error: errorMessage,
       orderId,
       productId,
     });
 
-    if (error.message.includes('Order not found')) {
+    if (errorMessage.includes('Order not found')) {
       res.status(404).json({ status: 'error', message: 'Order not found' });
       return;
     }
-    if (error.message.includes('Product not found in order')) {
+    if (errorMessage.includes('Product not found in order')) {
       res
         .status(404)
         .json({ status: 'error', message: 'Product not found in order' });
       return;
     }
-    if (error.message.includes('Quantity must be at least 1')) {
-      res.status(400).json({ status: 'error', message: error.message });
+    if (errorMessage.includes('Quantity must be at least 1')) {
+      res.status(400).json({ status: 'error', message: errorMessage });
       return;
     }
-    if (error.message.includes('Insufficient stock')) {
-      res.status(403).json({ status: 'error', message: error.message });
+    if (errorMessage.includes('Insufficient stock')) {
+      res.status(403).json({ status: 'error', message: errorMessage });
       return;
     }
-    if (error.message.includes('Insufficient balance')) {
-      res.status(403).json({ status: 'error', message: error.message });
+    if (errorMessage.includes('Insufficient balance')) {
+      res.status(403).json({ status: 'error', message: errorMessage });
       return;
     }
     next(error);
@@ -227,7 +241,7 @@ export const getUserOrders = async (
   }
 
   try {
-    const orderService = new OrderService();
+    const orderService = new OrderService(AppDataSource);
 
     const orders = await orderService.getOrdersByUserId(userId);
 
@@ -240,13 +254,17 @@ export const getUserOrders = async (
       status: 'success',
       data: orders,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const unknownError = new Error('Unknown error occurred');
+    const errorMessage =
+      error instanceof Error ? error.message : String(unknownError);
+
     logger.error('❌ Error retrieving orders', {
-      error: error.message,
+      error: errorMessage,
       userId,
     });
 
-    if (error.message.includes('User not found')) {
+    if (errorMessage.includes('User not found')) {
       res.status(404).json({ status: 'error', message: 'User not found' });
       return;
     }
@@ -262,7 +280,7 @@ export const getAllOrders = async (
   logger.info('GET /orders');
 
   try {
-    const orderService = new OrderService();
+    const orderService = new OrderService(AppDataSource);
 
     const orders = await orderService.getAllOrders();
 
@@ -274,8 +292,12 @@ export const getAllOrders = async (
       status: 'success',
       data: orders,
     });
-  } catch (error: any) {
-    logger.error('❌ Error retrieving orders', { error: error.message });
+  } catch (error: unknown) {
+    const unknownError = new Error('Unknown error occurred');
+    const errorMessage =
+      error instanceof Error ? error.message : String(unknownError);
+
+    logger.error('❌ Error retrieving orders', { error: errorMessage });
     next(error);
   }
 };
