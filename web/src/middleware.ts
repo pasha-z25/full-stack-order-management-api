@@ -1,5 +1,6 @@
+import { fallbackLng } from '@/i18n/utils';
+import { authRoutes } from '@/utils/constants';
 import { NextRequest, NextResponse } from 'next/server';
-import { authRoutes } from './utils/constants';
 
 export function middleware(req: NextRequest) {
   const token = req.cookies.get('token');
@@ -29,7 +30,7 @@ export function middleware(req: NextRequest) {
   const isProtectedRoute = !isAuthRoute;
 
   if (isProtectedRoute && !token) {
-    return NextResponse.redirect(new URL(`/${locale}/login`, req.url));
+    return NextResponse.redirect(new URL(`/${locale || fallbackLng}/login`, req.url));
   }
 
   return NextResponse.next();

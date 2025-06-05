@@ -1,7 +1,21 @@
 services:
-  # web:
-  #   build: ./web
-  #   image: next_js
+  web:
+    build: ./web
+    image: next_js
+    container_name: frontend_web
+    ports:
+      - '3000:3000'
+    depends_on:
+      server:
+        condition: service_started
+    networks:
+      - app_network
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./web:/app
+    command: npm run dev
 
   server:
     build: ./server
