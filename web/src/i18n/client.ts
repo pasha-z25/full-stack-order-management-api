@@ -1,6 +1,6 @@
 'use client';
 
-import type { AnyObj, Lang } from '@/utils/types';
+import type { AnyObj, Lang } from '@utils/types';
 
 import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
