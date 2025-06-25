@@ -10,6 +10,16 @@ interface LoginPayload {
   password: string;
 }
 
+// type ExtraParamType = {
+//   client: ApiClient;
+//   apiEndpoints: ApiEndpoints;
+// };
+
+// export const login = createAsyncThunk('auth/login', async (payload: LoginPayload, thunkAPI) => {
+//   const { client, apiEndpoints } = thunkAPI.extra as ExtraParamType;
+//   return await client.post(apiEndpoints.authLogin, JSON.stringify(payload));
+// });
+
 export const login = createAsyncThunk(
   'auth/login',
   async (
@@ -31,6 +41,14 @@ export const addNewUser = createAsyncThunk(
     return await client.post(apiEndpoints.allUsers, payload);
   }
 );
+
+// export const addNewUser = createAsyncThunk(
+//   'auth/addNewUser',
+//   async (payload: BodyInit, thunkAPI) => {
+//     const { client, apiEndpoints } = thunkAPI.extra as ExtraParamType;
+//     return await client.post(apiEndpoints.allUsers, payload);
+//   }
+// );
 
 export interface AuthState extends BasicApiState {
   user: User | null;
