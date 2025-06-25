@@ -1,4 +1,4 @@
-import type { Lang } from '@/utils/types';
+import type { Lang } from '@utils/types';
 
 import { createInstance } from 'i18next';
 import resourcesToBackend from 'i18next-resources-to-backend';

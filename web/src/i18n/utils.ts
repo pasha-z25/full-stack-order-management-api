@@ -1,4 +1,4 @@
-import { Lang } from '@/utils/types';
+import { Lang } from '@utils/types';
 
 export const fallbackLng = Lang.UA;
 export const languages = [fallbackLng, Lang.EN, Lang.RU];

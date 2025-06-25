@@ -23,9 +23,10 @@ app.get('/', function (_req, res) {
   res.send('Hello World');
 });
 
-app.use('/orders', rateLimiter, ordersRoutes);
-app.use('/users', rateLimiter, usersRoutes);
-app.use('/products', rateLimiter, productsRoutes);
+// app.use('/api/auth', authRoutes);
+app.use('/api/orders', rateLimiter, ordersRoutes);
+app.use('/api/users', rateLimiter, usersRoutes);
+app.use('/api/products', rateLimiter, productsRoutes);
 
 app.use((req: express.Request, res: express.Response) => {
   logger.warn('⚠️ Route not found', { requestInfo: getRequestInfo(req) });

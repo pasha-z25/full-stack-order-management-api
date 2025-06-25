@@ -1,5 +1,5 @@
-import { fallbackLng } from '@/i18n/utils';
-import { authRoutes } from '@/utils/constants';
+import { fallbackLng } from '@i18n/utils';
+import { authRoutes } from '@utils/constants';
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(req: NextRequest) {

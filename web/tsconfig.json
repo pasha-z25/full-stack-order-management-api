@@ -22,7 +22,9 @@
       "@/*": ["./src/*"],
       "@components/*": ["./src/app/components/*"],
       "@views/*": ["./src/app/views/*"],
-      "@i18n/*": ["./src/app/i18n/*"]
+      "@utils/*": ["./src/utils/*"],
+      "@store/*": ["./src/store/*"],
+      "@i18n/*": ["./src/i18n/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
