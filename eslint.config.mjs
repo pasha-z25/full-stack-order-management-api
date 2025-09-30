@@ -8,6 +8,13 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig([
   {
+    parser: '@typescript-eslint/parser',
+    parserOptions: {
+      project: ['./tsconfig.json'],
+      tsconfigRootDir: __dirname,
+    },
+  },
+  {
     files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
     plugins: { js },
     extends: ['js/recommended'],
