@@ -60,9 +60,9 @@ export async function seedDatabase(clearPrevious?: boolean) {
   }
 
   if (clearPrevious) {
-    await userRepository.delete({});
-    await productRepository.delete({});
-    await orderRepository.delete({});
+    await userRepository.createQueryBuilder().delete().execute();
+    await productRepository.createQueryBuilder().delete().execute();
+    await orderRepository.createQueryBuilder().delete().execute();
   }
 
   const userCount = await userRepository.count();
@@ -74,9 +74,9 @@ export async function seedDatabase(clearPrevious?: boolean) {
     await AppDataSource.destroy();
     return;
   } else {
-    await userRepository.delete({});
-    await productRepository.delete({});
-    await orderRepository.delete({});
+    await userRepository.createQueryBuilder().delete().execute();
+    await productRepository.createQueryBuilder().delete().execute();
+    await orderRepository.createQueryBuilder().delete().execute();
   }
 
   const initialUsers = await Promise.all(users.map(createUser));
