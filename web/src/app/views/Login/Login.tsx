@@ -30,7 +30,7 @@ export default function Login({ lang }: IViewProps) {
         <Card sx={{ py: 4 }}>
           <CardContent>
             {!!error && (
-              <Alert severity="error" className="mx-auto mb-8 min-w-[300px] max-w-max">
+              <Alert severity="error" className="mx-auto mb-8 max-w-max min-w-[300px]">
                 {error}
               </Alert>
             )}
