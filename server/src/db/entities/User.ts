@@ -1,5 +1,7 @@
 import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
+export type SafeUser = Omit<User, 'password' | 'registered'>;
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')

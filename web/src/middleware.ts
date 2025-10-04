@@ -1,5 +1,5 @@
 import { fallbackLng } from '@i18n/utils';
-import { authRoutes } from '@utils/constants';
+import { authRoutes, protectedRoutes } from '@utils/constants';
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(req: NextRequest) {
@@ -27,10 +27,15 @@ export function middleware(req: NextRequest) {
   const locale = segments[0];
 
   const isAuthRoute = segments.length > 1 && authRoutes.includes(segments[1]);
-  const isProtectedRoute = !isAuthRoute;
+  const isProtectedRoute =
+    !isAuthRoute && segments.length > 1 && protectedRoutes.includes(segments[1]);
 
   if (isProtectedRoute && !token) {
     return NextResponse.redirect(new URL(`/${locale || fallbackLng}/login`, req.url));
+  }
+
+  if (!locale) {
+    return NextResponse.redirect(new URL(`/${fallbackLng}`, req.url));
   }
 
   return NextResponse.next();

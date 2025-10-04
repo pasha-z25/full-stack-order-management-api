@@ -1,5 +1,6 @@
-import * as ordersController from '@/controllers/orders';
 import { Router } from 'express';
+
+import * as ordersController from '@/controllers/orders';
 
 const router = Router();
 

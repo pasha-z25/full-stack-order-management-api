@@ -1,11 +1,13 @@
-import { OrderService } from '@/services/orderService';
-import { BCRYPT_SALT_ROUNDS, CUSTOM_DATE_TIME_FORMAT } from '@/utils/constants';
-import { getRandomInt } from '@/utils/helpers';
+import type { Repository } from 'typeorm';
+
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { Repository } from 'typeorm';
+
+import { OrderService } from '@/services/orderService';
+import { BCRYPT_SALT_ROUNDS, CUSTOM_DATE_TIME_FORMAT } from '@/utils/constants';
+import { getRandomInt } from '@/utils/helpers';
 
 import { AppDataSource, initializeDataSource } from '.';
 import { Order, Product, User } from './entities';
@@ -50,8 +52,6 @@ const createProduct = (product: Partial<Product>) =>
     stock: getRandomInt(minStockQuantity, maxStockQuantity),
   });
 
-// const createOrder = () => {};
-
 export async function seedDatabase(clearPrevious?: boolean) {
   await initializeDataSource();
 
@@ -60,9 +60,24 @@ export async function seedDatabase(clearPrevious?: boolean) {
   }
 
   if (clearPrevious) {
-    await userRepository.createQueryBuilder().delete().execute();
-    await productRepository.createQueryBuilder().delete().execute();
+    const orders = await orderRepository
+      .createQueryBuilder('orders')
+      .leftJoinAndSelect('orders.items', 'items')
+      .getMany();
+
+    for (const order of orders) {
+      if (order.items) {
+        await AppDataSource.createQueryBuilder()
+          .delete()
+          .from('order_items')
+          .where('orderId = :orderId', { orderId: order.id })
+          .execute();
+      }
+    }
+
     await orderRepository.createQueryBuilder().delete().execute();
+    await productRepository.createQueryBuilder().delete().execute();
+    await userRepository.createQueryBuilder().delete().execute();
   }
 
   const userCount = await userRepository.count();
@@ -74,9 +89,24 @@ export async function seedDatabase(clearPrevious?: boolean) {
     await AppDataSource.destroy();
     return;
   } else {
-    await userRepository.createQueryBuilder().delete().execute();
-    await productRepository.createQueryBuilder().delete().execute();
+    const orders = await orderRepository
+      .createQueryBuilder('orders')
+      .leftJoinAndSelect('orders.items', 'items')
+      .getMany();
+
+    for (const order of orders) {
+      if (order.items) {
+        await AppDataSource.createQueryBuilder()
+          .delete()
+          .from('order_items')
+          .where('orderId = :orderId', { orderId: order.id })
+          .execute();
+      }
+    }
+
     await orderRepository.createQueryBuilder().delete().execute();
+    await productRepository.createQueryBuilder().delete().execute();
+    await userRepository.createQueryBuilder().delete().execute();
   }
 
   const initialUsers = await Promise.all(users.map(createUser));

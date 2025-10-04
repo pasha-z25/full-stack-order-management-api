@@ -1,6 +1,16 @@
 import winston from 'winston';
 
-const logger = winston.createLogger({
+export enum LOG_LEVEL {
+  ERROR = 'error',
+  WARN = 'warn',
+  INFO = 'info',
+  VERBOSE = 'verbose',
+  DEBUG = 'debug',
+  SILLY = 'silly',
+  PROFILE = 'profile',
+}
+
+export const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
