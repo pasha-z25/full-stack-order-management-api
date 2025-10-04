@@ -18,7 +18,7 @@ import storage from 'redux-persist/lib/storage';
 import authReducer from './slices/authSlice';
 import langReducer from './slices/langSlice';
 // import ordersReducer from './slices/ordersSlice';
-// import productsReducer from './slices/productsSlice';
+import productsReducer from './slices/productsSlice';
 // import usersReducer from './slices/usersSlice';
 
 const persistConfig = {
@@ -30,9 +30,9 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   lang: langReducer,
-  // users: usersReducer,
   // orders: ordersReducer,
-  // products: productsReducer,
+  products: productsReducer,
+  // users: usersReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

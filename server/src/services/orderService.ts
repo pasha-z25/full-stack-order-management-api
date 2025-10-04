@@ -1,6 +1,7 @@
+import type { DataSource, Repository } from 'typeorm';
+
 import { Order, OrderItem, Product, User } from '@/db/entities';
 import { getRepository } from '@/db/repository';
-import { DataSource, Repository } from 'typeorm';
 
 interface OrderData {
   userId: string;
@@ -212,6 +213,10 @@ export class OrderService {
   async getAllOrders(): Promise<Order[]> {
     return await this.orderRepository.find({
       relations: ['user', 'items', 'items.product'],
+      loadRelationIds: {
+        relations: ['user'],
+        disableMixedMap: false,
+      },
     });
   }
 }

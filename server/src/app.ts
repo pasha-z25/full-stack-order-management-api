@@ -3,7 +3,12 @@ import express from 'express';
 import 'express-async-errors';
 
 import { rateLimiter } from './middlewares/rateLimit';
-import { ordersRoutes, productsRoutes, usersRoutes } from './routes';
+import {
+  authRoutes,
+  ordersRoutes,
+  productsRoutes,
+  usersRoutes,
+} from './routes';
 import { getRequestInfo } from './utils/helpers';
 import logger from './utils/logger';
 
@@ -20,10 +25,10 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 app.get('/', function (_req, res) {
-  res.send('Hello World');
+  res.send('Server started successfully!');
 });
 
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/orders', rateLimiter, ordersRoutes);
 app.use('/api/users', rateLimiter, usersRoutes);
 app.use('/api/products', rateLimiter, productsRoutes);

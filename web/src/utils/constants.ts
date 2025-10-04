@@ -6,6 +6,8 @@ export const BROWSER_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localh
 
 export const authRoutes = ['login', 'register'];
 
+export const protectedRoutes = ['users', 'orders'];
+
 export const apiEndpoints: ApiEndpoints = {
   authLogin: '/auth/login',
   allOrders: '/orders',
