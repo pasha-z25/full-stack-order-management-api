@@ -1,6 +1,7 @@
 import type { DataSource, Repository } from 'typeorm';
 
 import { Order, OrderItem, Product, User } from '@db/entities';
+import { AppDataSource } from '@db/index';
 import { getRepository } from '@db/repository';
 
 interface OrderData {
@@ -220,3 +221,5 @@ export class OrderService {
     });
   }
 }
+
+export default new OrderService(AppDataSource);

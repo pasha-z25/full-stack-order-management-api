@@ -1,70 +1,64 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
+import { ResponseStatus } from '@/types';
 import UserService from '@services/userService';
-import logger from '@utils/logger';
+import { getRequestInfo } from '@utils/helpers';
+import logger, { LOG_LEVEL } from '@utils/logger';
 
 export const getAllUsers = async (
-  _req: Request,
-  res: Response
+  req: Request,
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
-  logger.info('GET /users');
-
   try {
-    const userService = new UserService();
+    const users = await UserService.getAllUsers();
 
-    const users = await userService.getAllUsers();
-
-    logger.info('Users retrieved successfully', {
+    logger.info('ℹ️  Users retrieved successfully', {
       usersCount: users.length,
     });
 
     res.status(200).json({
-      status: 'success',
+      status: ResponseStatus.SUCCESS,
       data: users,
     });
   } catch (error: unknown) {
-    const unknownError = new Error('Unknown error occurred');
-    const errorMessage =
-      error instanceof Error ? error.message : String(unknownError);
-
-    logger.error('❌ Error retrieving users', { error: errorMessage });
-    res.status(500).json({
-      status: 'error',
-      message: errorMessage || 'Internal server error',
+    logger.log({
+      level: LOG_LEVEL.ERROR,
+      scope: 'controller:users',
+      message: '❌  Error retrieving users',
+      requestInfo: getRequestInfo(req),
+      error,
     });
+
+    next(error);
   }
 };
 
 export const getUserById = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const userId = req.params.id;
 
-  logger.info('GET /users/:userId', { userId });
-
   try {
-    const userService = new UserService();
+    const user = await UserService.getUserById(userId);
 
-    const user = await userService.getUserById(userId);
-
-    logger.info('Users retrieved successfully', {
-      user: user,
-    });
+    logger.info(`ℹ️  User ${userId} retrieved successfully`);
 
     res.status(200).json({
-      status: 'success',
+      status: ResponseStatus.SUCCESS,
       data: user,
     });
   } catch (error: unknown) {
-    const unknownError = new Error('Unknown error occurred');
-    const errorMessage =
-      error instanceof Error ? error.message : String(unknownError);
-
-    logger.error('❌ Error retrieving user', { error: errorMessage });
-    res.status(500).json({
-      status: 'error',
-      message: errorMessage || 'Internal server error',
+    logger.log({
+      level: LOG_LEVEL.ERROR,
+      scope: 'controller:users',
+      message: `❌  Error retrieving user ${userId}`,
+      requestInfo: getRequestInfo(req),
+      error,
     });
+
+    next(error);
   }
 };

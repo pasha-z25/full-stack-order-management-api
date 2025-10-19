@@ -18,12 +18,12 @@ export const createDatabaseIfNotExists = async (dbName: string) => {
     );
     if (res.rowCount === 0) {
       await client.query(`CREATE DATABASE ${dbName}`);
-      console.log(`Database ${dbName} created`);
+      console.log(`📦 Database ${dbName} created`);
     } else {
-      console.log(`Database ${dbName} already exists`);
+      console.log(`💡 Database ${dbName} already exists`);
     }
   } catch (error) {
-    console.error(`Error creating database ${dbName}:`, error);
+    console.error(`❌ Error creating database ${dbName}:`, error);
     throw error;
   } finally {
     await client.end();

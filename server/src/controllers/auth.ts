@@ -1,18 +1,23 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
+import AuthService from '@services/authService';
 import { getRequestInfo } from '@utils/helpers';
 import { LOG_LEVEL, logger } from '@utils/logger';
 
 import { ResponseStatus } from '@/types';
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     logger.log({
       level: LOG_LEVEL.WARN,
       scope: 'controller:auth',
-      message: '⚠️ Email or password is empty',
+      message: '⚠️  Email or password is empty',
       requestInfo: getRequestInfo(req),
     });
 
@@ -24,13 +29,13 @@ export const login = async (req: Request, res: Response) => {
   }
 
   try {
-    const user = await authService.login(email, password);
+    const user = await AuthService.login(email, password);
 
     if (!user) {
       logger.log({
         level: LOG_LEVEL.WARN,
         scope: 'controller:auth',
-        message: '⚠️ User not found',
+        message: '⚠️  User not found',
         requestInfo: getRequestInfo(req),
       });
 
@@ -41,23 +46,39 @@ export const login = async (req: Request, res: Response) => {
       return;
     }
 
-    logger.log({
-      level: LOG_LEVEL.INFO,
-      scope: 'controller:auth',
-      message: 'ℹ️ User found successfully',
-      requestInfo: getRequestInfo(req),
-    });
+    logger.info('ℹ️  User found successfully');
 
     res.status(200).send({ status: ResponseStatus.SUCCESS, data: user });
   } catch (error) {
     logger.log({
       level: LOG_LEVEL.ERROR,
       scope: 'controller:auth',
-      message: '❌ Something went wrong!',
+      message: '❌  Error login user',
       requestInfo: getRequestInfo(req),
       error,
     });
 
-    res.status(400).send({ status: ResponseStatus.ERROR, error });
+    next(error);
+  }
+};
+
+export const register = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    logger.info('ℹ️  User registered successfully');
+    res.status(200).send({ status: ResponseStatus.SUCCESS, data: 'user data' });
+  } catch (error) {
+    logger.log({
+      level: LOG_LEVEL.ERROR,
+      scope: 'controller:auth',
+      message: '❌  Error register user',
+      requestInfo: getRequestInfo(req),
+      error,
+    });
+
+    next(error);
   }
 };
