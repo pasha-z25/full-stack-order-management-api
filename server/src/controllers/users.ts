@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 
-import { UserService } from '@/services/userService';
-import logger from '@/utils/logger';
+import UserService from '@services/userService';
+import logger from '@utils/logger';
 
 export const getAllUsers = async (
   _req: Request,

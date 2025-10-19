@@ -1,19 +1,19 @@
 'use client';
 
-import { useAppDispatch, useAppSelector } from '@/store';
-import { getAllProducts, getProducts, getProductsStatus } from '@/store/slices/productsSlice';
+import type { IViewProps, Product } from '@utils/types';
+
 import { Error, Loader } from '@components/UIElements';
 import { useTranslation } from '@i18n/client';
-import type { IViewProps, Product } from '@utils/types';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useEffect } from 'react';
-
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import Typography from '@mui/material/Typography';
+import { useAppDispatch, useAppSelector } from '@store/index';
+import { getAllProducts, getProducts, getProductsStatus } from '@store/slices/productsSlice';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect } from 'react';
 
 export default function AllProducts({ lang }: IViewProps) {
   const dispatch = useAppDispatch();

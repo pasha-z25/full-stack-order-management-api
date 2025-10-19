@@ -1,10 +1,9 @@
-import { AuthService } from '@/services/authService';
-import { ResponseStatus } from '@/types';
-import { getRequestInfo } from '@/utils/helpers';
-import { LOG_LEVEL, logger } from '@/utils/logger';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 
-const authService = new AuthService();
+import { getRequestInfo } from '@utils/helpers';
+import { LOG_LEVEL, logger } from '@utils/logger';
+
+import { ResponseStatus } from '@/types';
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;

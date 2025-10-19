@@ -1,8 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { AppDataSource } from '@/db';
-import { OrderService } from '@/services/orderService';
-import logger from '@/utils/logger';
+import OrderService from '@services/orderService';
+import logger from '@utils/logger';
 
 export const addOrder = async (
   req: Request,

@@ -1,14 +1,13 @@
+import type { SafeUser } from '@db/entities/User';
 import type { Repository } from 'typeorm';
 
+import { User } from '@db/entities';
+import { getRepository } from '@db/repository';
+import { JWT_SECRET_KEY } from '@utils/constants';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-import type { SafeUser } from '@/db/entities/User';
 import type { MyJwtPayload } from '@/types/jwt';
-
-import { User } from '@/db/entities';
-import { getRepository } from '@/db/repository';
-import { JWT_SECRET_KEY } from '@/utils/constants';
 
 export class AuthService {
   private userRepository: Repository<User> = getRepository(User);

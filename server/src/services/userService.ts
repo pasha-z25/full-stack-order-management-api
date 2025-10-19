@@ -1,7 +1,7 @@
 import type { Repository } from 'typeorm';
 
-import { User } from '@/db/entities';
-import { getRepository } from '@/db/repository';
+import { User } from '@db/entities';
+import { getRepository } from '@db/repository';
 
 export class UserService {
   private userRepository: Repository<User> = getRepository(User);

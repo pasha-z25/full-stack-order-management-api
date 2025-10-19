@@ -1,7 +1,7 @@
 import type { DataSource, Repository } from 'typeorm';
 
-import { Order, OrderItem, Product, User } from '@/db/entities';
-import { getRepository } from '@/db/repository';
+import { Order, OrderItem, Product, User } from '@db/entities';
+import { getRepository } from '@db/repository';
 
 interface OrderData {
   userId: string;

@@ -1,7 +1,6 @@
+import { USER_AVATAR_SOURCE } from '@utils/constants';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-
-import { USER_AVATAR_SOURCE } from '@/utils/constants';
 
 import { Product, User } from './entities';
 

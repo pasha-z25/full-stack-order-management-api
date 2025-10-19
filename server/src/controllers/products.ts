@@ -1,8 +1,9 @@
 import type { Request, Response } from 'express';
 
-import { ProductService } from '@/services/productService';
+import ProductService from '@services/productService';
+import logger from '@utils/logger';
+
 import { ResponseStatus } from '@/types';
-import logger from '@/utils/logger';
 
 export const getAllProducts = async (
   _req: Request,
