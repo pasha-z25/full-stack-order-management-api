@@ -1,6 +1,6 @@
-import { EntityTarget, ObjectLiteral, Repository } from 'typeorm';
+import type { EntityTarget, ObjectLiteral, Repository } from 'typeorm';
 
-import { AppDataSource } from '@/db';
+import { AppDataSource } from '@db/index';
 
 export const getRepository = <T extends ObjectLiteral>(
   entity: EntityTarget<T>

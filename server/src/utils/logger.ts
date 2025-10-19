@@ -22,7 +22,6 @@ export const logger = winston.createLogger({
       filename: 'src/logs/error.log',
       level: 'error',
     }),
-    new winston.transports.Console(),
   ],
 });
 

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { AuthService } from '@/services/authService';
+import { AuthService } from '@services/authService';
 
 export const authMiddleware = (authService: AuthService) => {
   return async (req: Request, res: Response, next: NextFunction) => {
