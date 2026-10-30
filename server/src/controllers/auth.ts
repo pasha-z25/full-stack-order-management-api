@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
+import { HttpError } from '@/errors/httpError';
 import AuthService from '@services/authService';
 import { getRequestInfo } from '@utils/helpers';
 import { LOG_LEVEL, logger } from '@utils/logger';
@@ -31,25 +32,25 @@ export const login = async (
   try {
     const user = await AuthService.login(email, password);
 
-    if (!user) {
+    logger.info('ℹ️  User found successfully');
+
+    res.status(200).send({ status: ResponseStatus.SUCCESS, data: user });
+  } catch (error: unknown) {
+    if (error instanceof HttpError) {
       logger.log({
         level: LOG_LEVEL.WARN,
         scope: 'controller:auth',
-        message: '⚠️  User not found',
+        message: '⚠️  Login failed',
         requestInfo: getRequestInfo(req),
       });
 
-      res.status(404).send({
+      res.status(error.statusCode).json({
         status: ResponseStatus.ERROR,
-        error: { message: 'User not found' },
+        message: error.message,
       });
       return;
     }
 
-    logger.info('ℹ️  User found successfully');
-
-    res.status(200).send({ status: ResponseStatus.SUCCESS, data: user });
-  } catch (error) {
     logger.log({
       level: LOG_LEVEL.ERROR,
       scope: 'controller:auth',
@@ -68,9 +69,27 @@ export const register = async (
   next: NextFunction
 ) => {
   try {
+    const session = await AuthService.register(req.body);
+
     logger.info('ℹ️  User registered successfully');
-    res.status(200).send({ status: ResponseStatus.SUCCESS, data: 'user data' });
-  } catch (error) {
+
+    res.status(201).json({ status: ResponseStatus.SUCCESS, data: session });
+  } catch (error: unknown) {
+    if (error instanceof HttpError) {
+      logger.log({
+        level: LOG_LEVEL.WARN,
+        scope: 'controller:auth',
+        message: '⚠️  Registration failed',
+        requestInfo: getRequestInfo(req),
+      });
+
+      res.status(error.statusCode).json({
+        status: ResponseStatus.ERROR,
+        message: error.message,
+      });
+      return;
+    }
+
     logger.log({
       level: LOG_LEVEL.ERROR,
       scope: 'controller:auth',

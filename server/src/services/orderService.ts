@@ -1,14 +1,14 @@
 import type { DataSource, Repository } from 'typeorm';
 
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+} from '@/errors/httpError';
+import type { OrderData } from '@/types/order';
 import { Order, OrderItem, Product, User } from '@db/entities';
 import { AppDataSource } from '@db/index';
 import { getRepository } from '@db/repository';
-
-interface OrderData {
-  userId: string;
-  productId: string;
-  quantity?: number;
-}
 
 export class OrderService {
   private orderRepository: Repository<Order> = getRepository(Order);
@@ -25,20 +25,111 @@ export class OrderService {
     this.orderItemRepository = dataSource.getRepository(OrderItem);
   }
 
-  private async findOrCreateOrder(userId: string, user: User): Promise<Order> {
-    let order = await this.orderRepository.findOne({
-      where: { user: { id: userId }, status: 'pending' },
-      relations: ['items', 'items.product'],
+  // Shared lock order for every balance and stock change: user, product, then order.
+  // QueryBuilder skips eager relations. find() would LEFT JOIN them, and Postgres
+  // rejects FOR UPDATE on the nullable side of an outer join.
+  private async lockUser(
+    userRepository: Repository<User>,
+    userId: string
+  ): Promise<User> {
+    const user = await userRepository.findOne({
+      where: { id: userId },
+      lock: { mode: 'pessimistic_write' },
     });
+    if (!user) throw new NotFoundError(`⚠️ User with ID ${userId} not found`);
+    return user;
+  }
+
+  private async lockProduct(
+    productRepository: Repository<Product>,
+    productId: string
+  ): Promise<Product> {
+    const product = await productRepository.findOne({
+      where: { id: productId },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!product)
+      throw new NotFoundError(`⚠️ Product with ID ${productId} not found`);
+    return product;
+  }
+
+  private async lockPendingOrder(
+    orderRepository: Repository<Order>,
+    userId: string
+  ): Promise<Order | null> {
+    return await orderRepository
+      .createQueryBuilder('order')
+      .innerJoin('order.user', 'user')
+      .where('user.id = :userId', { userId })
+      .andWhere('order.status = :status', { status: 'pending' })
+      .setLock('pessimistic_write')
+      .getOne();
+  }
+
+  private async lockOrderById(
+    orderRepository: Repository<Order>,
+    orderId: string
+  ): Promise<Order | null> {
+    return await orderRepository
+      .createQueryBuilder('order')
+      .setLock('pessimistic_write')
+      .where('order.id = :orderId', { orderId })
+      .getOne();
+  }
+
+  private async findOrderUserId(
+    orderRepository: Repository<Order>,
+    orderId: string
+  ): Promise<string> {
+    const order = await orderRepository
+      .createQueryBuilder('order')
+      .innerJoinAndSelect('order.user', 'user')
+      .where('order.id = :orderId', { orderId })
+      .getOne();
+
+    if (!order)
+      throw new NotFoundError(`⚠️ Order with ID ${orderId} not found`);
+    return order.user.id;
+  }
+
+  private assertOrderOwner(
+    ownerId: string,
+    userId: string,
+    orderId: string
+  ): void {
+    if (ownerId !== userId)
+      throw new NotFoundError(`⚠️ Order with ID ${orderId} not found`);
+  }
+
+  private async loadOrderItems(
+    orderItemRepository: Repository<OrderItem>,
+    orderId: string
+  ): Promise<OrderItem[]> {
+    return await orderItemRepository.find({
+      where: { order: { id: orderId } },
+      relations: ['product'],
+    });
+  }
+
+  private async findOrCreateOrder(
+    orderRepository: Repository<Order>,
+    orderItemRepository: Repository<OrderItem>,
+    userId: string,
+    user: User
+  ): Promise<Order> {
+    const order = await this.lockPendingOrder(orderRepository, userId);
 
     if (!order) {
-      order = this.orderRepository.create({
+      return orderRepository.create({
         user,
         items: [],
         totalPrice: 0,
         status: 'pending',
       });
     }
+
+    order.user = user;
+    order.items = await this.loadOrderItems(orderItemRepository, order.id);
     return order;
   }
 
@@ -50,14 +141,14 @@ export class OrderService {
     const totalPrice = product.price * quantity;
 
     if (user.balance < totalPrice) {
-      throw new Error(
-        `⚠️ Insufficient balance for user ${user.name}. Required: ${totalPrice}, Available: ${user.balance}`
+      throw new ConflictError(
+        `⚠️ Insufficient balance for user ${user.id}. Required: ${totalPrice}, Available: ${user.balance}`
       );
     }
 
     if (product.stock < quantity) {
-      throw new Error(
-        `⚠️ Insufficient stock for product ${product.title}. Available: ${product.stock}, Requested: ${quantity}`
+      throw new ConflictError(
+        `⚠️ Insufficient stock for ${product.title}. Available: ${product.stock}, Requested: ${quantity}`
       );
     }
 
@@ -78,19 +169,20 @@ export class OrderService {
         this.orderItemRepository
       );
 
-      const user = await userRepository.findOneBy({ id: userId });
-      if (!user) throw new Error(`⚠️ User with ID ${userId} not found`);
-
-      const product = await productRepository.findOneBy({ id: productId });
-      if (!product)
-        throw new Error(`⚠️ Product with ID ${productId} not found`);
-
-      const order = await this.findOrCreateOrder(userId, user);
+      const user = await this.lockUser(userRepository, userId);
+      const product = await this.lockProduct(productRepository, productId);
+      const order = await this.findOrCreateOrder(
+        orderRepository,
+        orderItemRepository,
+        userId,
+        user
+      );
       const existingItem = order.items.find(
         (item) => item.product.id === productId
       );
 
       if (existingItem) {
+        existingItem.product = product;
         existingItem.quantity += quantity;
         await orderItemRepository.save(existingItem);
       } else {
@@ -105,11 +197,15 @@ export class OrderService {
       );
       order.totalPrice += priceAdjustment;
 
+      await userRepository.save(user);
+      await productRepository.save(product);
+
       return await orderRepository.save(order);
     });
   }
 
   async removeFromOrder(
+    userId: string,
     orderId: string,
     productId: string
   ): Promise<Order | null> {
@@ -117,21 +213,29 @@ export class OrderService {
       const userRepository = manager.withRepository(this.userRepository);
       const productRepository = manager.withRepository(this.productRepository);
       const orderRepository = manager.withRepository(this.orderRepository);
+      const orderItemRepository = manager.withRepository(
+        this.orderItemRepository
+      );
 
-      const order = await orderRepository.findOne({
-        where: { id: orderId },
-        relations: ['items', 'items.product', 'user'],
-      });
-      if (!order) throw new Error(`⚠️ Order with ID ${orderId} not found`);
+      const ownerId = await this.findOrderUserId(orderRepository, orderId);
+      this.assertOrderOwner(ownerId, userId, orderId);
+      const user = await this.lockUser(userRepository, ownerId);
+      const product = await this.lockProduct(productRepository, productId);
+      const order = await this.lockOrderById(orderRepository, orderId);
+      if (!order)
+        throw new NotFoundError(`⚠️ Order with ID ${orderId} not found`);
+
+      order.user = user;
+      order.items = await this.loadOrderItems(orderItemRepository, order.id);
 
       const itemToRemove = order.items.find(
         (item) => item.product.id === productId
       );
       if (!itemToRemove)
-        throw new Error(`⚠️ Product with ID ${productId} not found in order`);
+        throw new NotFoundError(
+          `⚠️ Product with ID ${productId} not found in order`
+        );
 
-      const user = order.user;
-      const product = itemToRemove.product;
       const quantity = itemToRemove.quantity;
 
       user.balance += product.price * quantity;
@@ -139,6 +243,7 @@ export class OrderService {
 
       await userRepository.save(user);
       await productRepository.save(product);
+      await orderItemRepository.remove(itemToRemove);
 
       order.items = order.items.filter((item) => item.product.id !== productId);
       order.totalPrice -= product.price * quantity;
@@ -153,11 +258,13 @@ export class OrderService {
   }
 
   async updateQuantity(
+    userId: string,
     orderId: string,
     productId: string,
     newQuantity: number
   ): Promise<Order> {
-    if (newQuantity < 1) throw new Error(`⚠️ Quantity must be at least 1`);
+    if (newQuantity < 1)
+      throw new BadRequestError('⚠️ Quantity must be at least 1');
 
     return await this.dataSource.transaction(async (manager) => {
       const userRepository = manager.withRepository(this.userRepository);
@@ -167,18 +274,24 @@ export class OrderService {
         this.orderItemRepository
       );
 
-      const order = await orderRepository.findOne({
-        where: { id: orderId },
-        relations: ['items', 'items.product', 'user'],
-      });
-      if (!order) throw new Error(`⚠️ Order with ID ${orderId} not found`);
+      const ownerId = await this.findOrderUserId(orderRepository, orderId);
+      this.assertOrderOwner(ownerId, userId, orderId);
+      const user = await this.lockUser(userRepository, ownerId);
+      const product = await this.lockProduct(productRepository, productId);
+      const order = await this.lockOrderById(orderRepository, orderId);
+      if (!order)
+        throw new NotFoundError(`⚠️ Order with ID ${orderId} not found`);
 
-      const item = order.items.find((item) => item.product.id === productId);
+      order.user = user;
+      order.items = await this.loadOrderItems(orderItemRepository, order.id);
+
+      const item = order.items.find((entry) => entry.product.id === productId);
       if (!item)
-        throw new Error(`⚠️ Product with ID ${productId} not found in order`);
+        throw new NotFoundError(
+          `⚠️ Product with ID ${productId} not found in order`
+        );
 
-      const user = order.user;
-      const product = item.product;
+      item.product = product;
       const oldQuantity = item.quantity;
 
       const quantityDifference = newQuantity - oldQuantity;
@@ -189,6 +302,9 @@ export class OrderService {
       } else if (quantityDifference < 0) {
         user.balance -= priceDifference;
         product.stock -= quantityDifference;
+      }
+
+      if (quantityDifference !== 0) {
         await userRepository.save(user);
         await productRepository.save(product);
       }
@@ -203,7 +319,7 @@ export class OrderService {
 
   async getOrdersByUserId(userId: string): Promise<Order[]> {
     const user = await this.userRepository.findOneBy({ id: userId });
-    if (!user) throw new Error('⚠️ User not found');
+    if (!user) throw new NotFoundError(`⚠️ User with ID ${userId} not found`);
 
     return await this.orderRepository.find({
       where: { user: { id: userId } },

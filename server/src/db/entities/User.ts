@@ -1,5 +1,7 @@
 import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
+import { moneyColumn } from '../money';
+
 export type SafeUser = Omit<User, 'password' | 'registered'>;
 
 @Entity('users')
@@ -26,21 +28,7 @@ export class User {
   @Column({ type: 'text', nullable: true })
   address?: string | null;
 
-  @Column({
-    type: 'decimal',
-    default: 100,
-    precision: 10,
-    scale: 2,
-    nullable: false,
-    transformer: {
-      to(value: number): number {
-        return value;
-      },
-      from(value: string): number {
-        return parseFloat(value);
-      },
-    },
-  })
+  @Column(moneyColumn({ default: 100 }))
   balance!: number;
 
   @Column({ type: 'timestamp', nullable: false })

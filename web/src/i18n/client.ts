@@ -5,8 +5,8 @@ import type { AnyObj, Lang } from '@utils/types';
 import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import resourcesToBackend from 'i18next-resources-to-backend';
+import Cookies from 'js-cookie';
 import { useEffect, useState } from 'react';
-import { useCookies } from 'react-cookie';
 import { initReactI18next, useTranslation as useTranslationOrg } from 'react-i18next';
 
 import { cookieName, defaultNS, getOptions, languages } from './utils';
@@ -31,7 +31,6 @@ i18next
   });
 
 export function useTranslation(lng: Lang, ns = defaultNS, options: AnyObj = {}) {
-  const [cookies, setCookie] = useCookies([cookieName]);
   const ret = useTranslationOrg(ns, options);
   const { i18n } = ret;
 
@@ -50,10 +49,10 @@ export function useTranslation(lng: Lang, ns = defaultNS, options: AnyObj = {}) 
   }, [lng, i18n]);
 
   useEffect(() => {
-    if (!runsOnServerSide && cookies.i18next !== lng) {
-      setCookie(cookieName, lng, { path: '/' });
+    if (!runsOnServerSide && Cookies.get(cookieName) !== lng) {
+      Cookies.set(cookieName, lng, { path: '/' });
     }
-  }, [lng, cookies.i18next, setCookie]);
+  }, [lng]);
 
   if (runsOnServerSide && lng && i18n.resolvedLanguage !== lng) {
     i18n.changeLanguage(lng);

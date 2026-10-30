@@ -1,9 +1,9 @@
 import { fallbackLng } from '@i18n/utils';
-import { authRoutes, protectedRoutes } from '@utils/constants';
+import { AUTH_TOKEN_COOKIE, authRoutes, protectedRoutes } from '@utils/constants';
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get('token');
+  const token = req.cookies.get(AUTH_TOKEN_COOKIE);
   const { pathname } = req.nextUrl;
 
   if (

@@ -10,6 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+import { moneyColumn } from '../money';
 import { OrderItem } from './OrderItem';
 import { User } from './User';
 
@@ -29,7 +30,7 @@ export class Order {
   })
   items!: OrderItem[];
 
-  @Column({ type: 'decimal', nullable: false })
+  @Column(moneyColumn())
   totalPrice!: number;
 
   @Column({

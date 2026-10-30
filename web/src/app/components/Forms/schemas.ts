@@ -23,12 +23,9 @@ export const RegisterFormSchema = z
       .string()
       .min(1, { message: 'zodErrors.fieldHasToBeFilled' })
       .email({ message: 'zodErrors.notValidEmail' }),
-    phone: z
-      .string()
-      .refine((phone) => isMobilePhone(phone), {
-        message: 'zodErrors.notValidPhone',
-      })
-      .optional(),
+    phone: z.string().refine((phone) => phone.trim() === '' || isMobilePhone(phone), {
+      message: 'zodErrors.notValidPhone',
+    }),
     password: z.string().min(6, { message: 'zodErrors.tooShortPassword' }),
     confirmPassword: z.string().min(6, { message: 'zodErrors.tooShortPassword' }),
 

@@ -9,6 +9,32 @@ export interface OrdersState extends BasicApiState {
   selectedOrder: Order | null;
 }
 
+interface AddOrderPayload {
+  productId: string;
+  quantity?: number;
+}
+
+interface OrderLinePayload {
+  orderId: string;
+  productId: string;
+}
+
+interface UpdateOrderLinePayload extends OrderLinePayload {
+  quantity: number;
+}
+
+function rememberOrder(state: OrdersState, order: Order) {
+  state.selectedOrder = order;
+  if (!state.allOrders) {
+    state.allOrders = [order];
+    return;
+  }
+
+  const index = state.allOrders.findIndex((item) => item.id === order.id);
+  if (index === -1) state.allOrders.push(order);
+  else state.allOrders[index] = order;
+}
+
 const initialState: OrdersState = {
   allOrders: null,
   selectedOrder: null,
@@ -24,36 +50,39 @@ export const getOrders = createAsyncThunk(
   }
 );
 
-export const getOrder = createAsyncThunk(
-  'orders/getOrder',
+export const addOrder = createAsyncThunk(
+  'orders/addOrder',
   async (
-    payload: string | number,
+    { productId, quantity = 1 }: AddOrderPayload,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     { extra: { client, apiEndpoints } }: { extra: any }
   ) => {
-    return await client.get(apiEndpoints.oneOrder(payload));
+    return await client.post(apiEndpoints.allOrders, JSON.stringify({ productId, quantity }));
   }
 );
 
 export const deleteOrder = createAsyncThunk(
   'orders/deleteOrder',
   async (
-    payload: string | number,
+    { orderId, productId }: OrderLinePayload,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     { extra: { client, apiEndpoints } }: { extra: any }
   ) => {
-    return await client.delete(apiEndpoints.oneOrder(payload));
+    return await client.delete(apiEndpoints.orderLine(orderId, productId));
   }
 );
 
 export const updateOrder = createAsyncThunk(
   'orders/updateOrder',
   async (
-    payload: Partial<Order>,
+    { orderId, productId, quantity }: UpdateOrderLinePayload,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     { extra: { client, apiEndpoints } }: { extra: any }
   ) => {
-    return await client.patch(apiEndpoints.oneOrder(payload.id), JSON.stringify(payload));
+    return await client.patch(
+      apiEndpoints.orderLine(orderId, productId),
+      JSON.stringify({ quantity })
+    );
   }
 );
 
@@ -68,24 +97,25 @@ const ordersSlice = createSlice({
         state.error = null;
         state.loading = false;
       })
-      .addCase(getOrder.fulfilled, (state, action) => {
-        state.selectedOrder = action.payload;
+      .addCase(addOrder.fulfilled, (state, action) => {
+        rememberOrder(state, action.payload as Order);
         state.error = null;
         state.loading = false;
       })
-      // .addCase(addOrder.fulfilled, (state, action) => {
-      //   console.log('!!! Action addOrder', action);
-      //   state.error = null;
-      //   state.loading = false;
-      // })
       .addCase(deleteOrder.fulfilled, (state, action) => {
-        console.log('!!! Action deleteOrder', action);
+        const order = action.payload as Order | undefined;
+        if (order) {
+          rememberOrder(state, order);
+        } else {
+          const { orderId } = action.meta.arg;
+          state.allOrders = state.allOrders?.filter((item) => item.id !== orderId) ?? null;
+          if (state.selectedOrder?.id === orderId) state.selectedOrder = null;
+        }
         state.error = null;
         state.loading = false;
       })
       .addCase(updateOrder.fulfilled, (state, action) => {
-        console.log('!!! Action updateOrder', action);
-        // state.selectedOrder = action.payload;
+        rememberOrder(state, action.payload as Order);
         state.error = null;
         state.loading = false;
       })

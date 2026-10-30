@@ -1,22 +1,20 @@
 import * as ordersController from '@controllers/orders';
+import { AuthService } from '@services/authService';
 import { Router } from 'express';
 
+import { authMiddleware } from '@/middlewares/auth';
+
 const router = Router();
+const authService = new AuthService();
 
-// router.post('/', ordersController.addOrder);
+router.use(authMiddleware(authService));
 
-// router.get('/:userId', ordersController.getUserOrders);
+router.post('/', ordersController.addOrder);
 
-// router.get('/', ordersController.getAllOrders);
+router.delete('/:orderId/product/:productId', ordersController.removeFromOrder);
 
-router.post('/', ordersController.addOrder); // POST /orders
+router.patch('/:orderId/product/:productId', ordersController.updateQuantity);
 
-router.delete('/:orderId/product/:productId', ordersController.removeFromOrder); // DELETE /orders/:orderId/product/:productId
-
-router.patch('/:orderId/product/:productId', ordersController.updateQuantity); // PATCH /orders/:orderId/product/:productId
-
-router.get('/:userId', ordersController.getUserOrders); // GET /orders/:userId
-
-router.get('/', ordersController.getAllOrders); // GET /orders
+router.get('/', ordersController.getUserOrders);
 
 export default router;
