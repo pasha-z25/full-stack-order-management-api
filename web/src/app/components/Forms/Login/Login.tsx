@@ -7,6 +7,8 @@ import Button from '@mui/material/Button';
 import { useAppDispatch, useAppSelector } from '@store/index';
 import { getAuthState, login } from '@store/slices/authSlice';
 import { getLang } from '@store/slices/langSlice';
+import { AUTH_TOKEN_COOKIE } from '@utils/constants';
+import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -17,15 +19,15 @@ import { LoginFormDefaultValues, LoginFormSchema, LoginFormType } from '../schem
 export default function Login() {
   const dispatch = useAppDispatch();
   const lang = useAppSelector(getLang) || fallbackLng;
-  const { user, token } = useAppSelector(getAuthState);
+  const { user } = useAppSelector(getAuthState);
   const router = useRouter();
   const { t } = useTranslation(lang);
 
   useEffect(() => {
-    if (!!user && !!token) {
+    if (user && Cookies.get(AUTH_TOKEN_COOKIE)) {
       router.push(`/${lang}`);
     }
-  }, [user, token, lang, router]);
+  }, [user, lang, router]);
 
   const { control, handleSubmit } = useForm<LoginFormType>({
     resolver: zodResolver(LoginFormSchema),

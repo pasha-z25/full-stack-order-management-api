@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { apiEndpoints } from '@utils/constants';
 import { client } from '@utils/helpers';
+
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { combineReducers } from 'redux';
 import {
+  createMigrate,
   FLUSH,
   PAUSE,
   PERSIST,
@@ -12,8 +14,10 @@ import {
   PURGE,
   REGISTER,
   REHYDRATE,
+  type PersistedState,
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+import { apiErrorToast } from './apiErrorToast';
 
 import authReducer from './slices/authSlice';
 import langReducer from './slices/langSlice';
@@ -21,10 +25,24 @@ import langReducer from './slices/langSlice';
 import productsReducer from './slices/productsSlice';
 // import usersReducer from './slices/usersSlice';
 
+const stripPersistedToken = (state: PersistedState): PersistedState => {
+  if (!state || !('auth' in state)) return state;
+  const stored = state as PersistedState & { auth?: { token?: string } };
+  if (!stored.auth) return state;
+  const { token: _token, ...auth } = stored.auth;
+  return { ...stored, auth } as PersistedState;
+};
+
+const migrations = {
+  1: stripPersistedToken,
+};
+
 const persistConfig = {
   key: 'root',
+  version: 1,
   storage,
   whitelist: ['auth'],
+  migrate: createMigrate(migrations),
 };
 
 const rootReducer = combineReducers({
@@ -51,7 +69,7 @@ export const store = configureStore({
           apiEndpoints,
         },
       },
-    }),
+    }).concat(apiErrorToast),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

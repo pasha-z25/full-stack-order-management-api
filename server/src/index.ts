@@ -5,9 +5,20 @@ import { app } from './app';
 import { initializeDataSource } from './db';
 import { createDatabaseIfNotExists } from './utils/createDatabase';
 import { serverListenerLogger } from './utils/helpers';
+import { getJwtSecret } from './utils/jwtSecret';
 import logger from './utils/logger';
 
 dotenvFlow.config();
+
+try {
+  getJwtSecret();
+} catch (error) {
+  logger.error('❌ JWT secret is not configured', {
+    error: error instanceof Error ? error.message : error,
+  });
+  process.exit(1);
+}
+
 const PORT = process.env.PORT || 8888;
 
 const startServer = async () => {

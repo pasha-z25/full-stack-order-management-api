@@ -37,10 +37,11 @@ export interface ApiClient {
 
 export interface ApiEndpoints {
   authLogin: string;
+  authRegister: string;
   allUsers: string;
   oneUser: (id: string | number) => string;
   allOrders: string;
-  oneOrder: (id: string | number) => string;
+  orderLine: (orderId: string, productId: string) => string;
   allProducts: string;
   oneProduct: (id: string | number) => string;
 }

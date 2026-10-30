@@ -1,6 +1,7 @@
 import type { User } from '@utils/types';
 
 import { createAsyncThunk, createSlice, isPending, isRejected } from '@reduxjs/toolkit';
+import { AUTH_TOKEN_COOKIE } from '@utils/constants';
 import Cookies from 'js-cookie';
 
 import type { BasicApiState } from '../types';
@@ -31,33 +32,40 @@ export const login = createAsyncThunk(
   }
 );
 
-export const addNewUser = createAsyncThunk(
-  'auth/addNewUser',
+interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  address?: string;
+}
+
+export const register = createAsyncThunk(
+  'auth/register',
   async (
-    payload: BodyInit,
+    { name, email, password, phone, address }: RegisterPayload,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     { extra: { client, apiEndpoints } }: { extra: any }
   ) => {
-    return await client.post(apiEndpoints.allUsers, payload);
+    return await client.post(
+      apiEndpoints.authRegister,
+      JSON.stringify({
+        name,
+        email,
+        password,
+        phone: phone?.trim() || null,
+        address: address?.trim() || null,
+      })
+    );
   }
 );
 
-// export const addNewUser = createAsyncThunk(
-//   'auth/addNewUser',
-//   async (payload: BodyInit, thunkAPI) => {
-//     const { client, apiEndpoints } = thunkAPI.extra as ExtraParamType;
-//     return await client.post(apiEndpoints.allUsers, payload);
-//   }
-// );
-
 export interface AuthState extends BasicApiState {
   user: User | null;
-  token: string | null;
 }
 
 const initialState: AuthState = {
   user: null,
-  token: null,
   error: null,
   loading: false,
 };
@@ -68,25 +76,24 @@ const authSlice = createSlice({
   reducers: {
     logout: (state) => {
       state.user = null;
-      state.token = null;
       state.error = null;
       state.loading = false;
-      Cookies.remove('token');
+      Cookies.remove(AUTH_TOKEN_COOKIE);
     },
   },
   extraReducers(builder) {
     builder
       .addCase(login.fulfilled, (state, action) => {
         state.user = action.payload.user;
-        state.token = action.payload.accessToken;
         state.loading = false;
         state.error = null;
-        Cookies.set('token', action.payload.accessToken);
+        Cookies.set(AUTH_TOKEN_COOKIE, action.payload.accessToken);
       })
-      .addCase(addNewUser.fulfilled, (state, action) => {
-        state.user = action.payload;
+      .addCase(register.fulfilled, (state, action) => {
+        state.user = action.payload.user;
         state.loading = false;
         state.error = null;
+        Cookies.set(AUTH_TOKEN_COOKIE, action.payload.accessToken);
       })
       .addMatcher(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -102,9 +109,8 @@ const authSlice = createSlice({
         (state, action) => {
           state.error = action.error.message;
           state.user = null;
-          state.token = null;
           state.loading = false;
-          Cookies.remove('token');
+          Cookies.remove(AUTH_TOKEN_COOKIE);
         }
       );
   },

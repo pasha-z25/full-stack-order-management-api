@@ -4,7 +4,12 @@ import 'express-async-errors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 
-import { rateLimiter } from './middlewares/rateLimit';
+import { HttpError } from './errors/httpError';
+import {
+  apiLimiter,
+  authLimiter,
+  catalogLimiter,
+} from './middlewares/rateLimit';
 import {
   authRoutes,
   ordersRoutes,
@@ -39,10 +44,10 @@ app.get('/', function (_req, res) {
   res.send('Server started successfully!');
 });
 
-app.use('/api/auth', rateLimiter, authRoutes);
-app.use('/api/orders', rateLimiter, ordersRoutes);
-app.use('/api/users', rateLimiter, usersRoutes);
-app.use('/api/products', rateLimiter, productsRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/orders', apiLimiter, ordersRoutes);
+app.use('/api/users', apiLimiter, usersRoutes);
+app.use('/api/products', catalogLimiter, productsRoutes);
 
 app.use((req: Request, res: Response) => {
   if (req.url.includes('.well-known') || req.url.includes('devtools')) {
@@ -61,28 +66,19 @@ app.use((req: Request, res: Response) => {
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   const isDev = process.env.NODE_ENV === 'development';
-  let statusCode = 500;
-  let message = 'Internal server error';
+  const statusCode = err instanceof HttpError ? err.statusCode : 500;
+  const message =
+    err instanceof HttpError
+      ? err.message
+      : err instanceof Error && isDev
+        ? err.message
+        : 'Internal server error';
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (err && typeof (err as any).statusCode === 'number') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    statusCode = (err as any).statusCode;
-  }
-
-  if (err instanceof Error) {
-    message = isDev ? err.message : 'Internal server error';
-    logger.error('❌  Unhandled error', {
-      error: err,
-      statusCode,
-      requestInfo: getRequestInfo(req),
-    });
-  } else {
-    logger.error('❌  Unknown error', {
-      error: err,
-      requestInfo: getRequestInfo(req),
-    });
-  }
+  logger.error('❌  Unhandled error', {
+    error: err,
+    statusCode,
+    requestInfo: getRequestInfo(req),
+  });
 
   res.status(statusCode).json({
     status: ResponseStatus.ERROR,

@@ -32,6 +32,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - ./server/.env
     environment:
       - NODE_ENV=development
       - DB_HOST=postgres_db_server

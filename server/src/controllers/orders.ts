@@ -1,23 +1,49 @@
 import type { NextFunction, Request, Response } from 'express';
 
+import { HttpError } from '@/errors/httpError';
 import { ResponseStatus } from '@/types';
 import OrderService from '@services/orderService';
 import { getRequestInfo } from '@utils/helpers';
 import logger, { LOG_LEVEL } from '@utils/logger';
+import { toPublicOrder } from '@utils/present';
+
+const replyWithHttpError = (res: Response, error: unknown): boolean => {
+  if (!(error instanceof HttpError)) return false;
+
+  res.status(error.statusCode).json({
+    status: ResponseStatus.ERROR,
+    message: error.message,
+  });
+  return true;
+};
+
+const requireUserId = (req: Request, res: Response): string | null => {
+  const userId = req.user?.sub;
+  if (userId) return userId;
+
+  res.status(401).json({
+    status: ResponseStatus.ERROR,
+    message: 'Unauthorized',
+  });
+  return null;
+};
 
 export const addOrder = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { userId, productId, quantity = 1 } = req.body;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
 
-  if (!userId || !productId || quantity <= 0) {
+  const { productId, quantity = 1 } = req.body;
+
+  if (!productId || quantity <= 0) {
     logger.warn('⚠️  Invalid request data', { userId, productId, quantity });
     res.status(400).json({
       status: ResponseStatus.ERROR,
       message:
-        'Invalid request data. userId, productId, and quantity (positive integer) are required.',
+        'Invalid request data. productId and quantity (positive integer) are required.',
     });
     return;
   }
@@ -37,13 +63,9 @@ export const addOrder = async (
 
     res.status(201).json({
       status: ResponseStatus.SUCCESS,
-      data: order,
+      data: toPublicOrder(order),
     });
   } catch (error: unknown) {
-    const unknownError = new Error('Unknown error occurred');
-    const errorMessage =
-      error instanceof Error ? error.message : String(unknownError);
-
     logger.log({
       level: LOG_LEVEL.ERROR,
       scope: 'controller:orders',
@@ -52,30 +74,7 @@ export const addOrder = async (
       error,
     });
 
-    if (errorMessage.includes('User not found')) {
-      res
-        .status(404)
-        .json({ status: ResponseStatus.ERROR, message: 'User not found' });
-      return;
-    }
-    if (errorMessage.includes('Product not found')) {
-      res
-        .status(404)
-        .json({ status: ResponseStatus.ERROR, message: 'Product not found' });
-      return;
-    }
-    if (errorMessage.includes('Insufficient stock')) {
-      res
-        .status(403)
-        .json({ status: ResponseStatus.ERROR, message: errorMessage });
-      return;
-    }
-    if (errorMessage.includes('Insufficient balance')) {
-      res
-        .status(403)
-        .json({ status: ResponseStatus.ERROR, message: errorMessage });
-      return;
-    }
+    if (replyWithHttpError(res, error)) return;
     next(error);
   }
 };
@@ -85,6 +84,9 @@ export const removeFromOrder = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
   const { orderId, productId } = req.params;
 
   if (!orderId || !productId) {
@@ -97,7 +99,11 @@ export const removeFromOrder = async (
   }
 
   try {
-    const updatedOrder = await OrderService.removeFromOrder(orderId, productId);
+    const updatedOrder = await OrderService.removeFromOrder(
+      userId,
+      orderId,
+      productId
+    );
 
     if (!updatedOrder) {
       logger.info('ℹ️  Order deleted as it became empty', { orderId });
@@ -115,13 +121,9 @@ export const removeFromOrder = async (
 
     res.status(200).json({
       status: ResponseStatus.SUCCESS,
-      data: updatedOrder,
+      data: toPublicOrder(updatedOrder),
     });
   } catch (error: unknown) {
-    const unknownError = new Error('Unknown error occurred');
-    const errorMessage =
-      error instanceof Error ? error.message : String(unknownError);
-
     logger.log({
       level: LOG_LEVEL.ERROR,
       scope: 'controller:orders',
@@ -130,19 +132,7 @@ export const removeFromOrder = async (
       error,
     });
 
-    if (errorMessage.includes('Order not found')) {
-      res
-        .status(404)
-        .json({ status: ResponseStatus.ERROR, message: 'Order not found' });
-      return;
-    }
-    if (errorMessage.includes('Product not found in order')) {
-      res.status(404).json({
-        status: ResponseStatus.ERROR,
-        message: 'Product not found in order',
-      });
-      return;
-    }
+    if (replyWithHttpError(res, error)) return;
     next(error);
   }
 };
@@ -152,6 +142,9 @@ export const updateQuantity = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
   const { orderId, productId } = req.params;
   const { quantity } = req.body;
 
@@ -167,6 +160,7 @@ export const updateQuantity = async (
 
   try {
     const updatedOrder = await OrderService.updateQuantity(
+      userId,
       orderId,
       productId,
       quantity
@@ -180,13 +174,9 @@ export const updateQuantity = async (
 
     res.status(200).json({
       status: ResponseStatus.SUCCESS,
-      data: updatedOrder,
+      data: toPublicOrder(updatedOrder),
     });
   } catch (error: unknown) {
-    const unknownError = new Error('Unknown error occurred');
-    const errorMessage =
-      error instanceof Error ? error.message : String(unknownError);
-
     logger.log({
       level: LOG_LEVEL.ERROR,
       scope: 'controller:orders',
@@ -195,37 +185,7 @@ export const updateQuantity = async (
       error,
     });
 
-    if (errorMessage.includes('Order not found')) {
-      res
-        .status(404)
-        .json({ status: ResponseStatus.ERROR, message: 'Order not found' });
-      return;
-    }
-    if (errorMessage.includes('Product not found in order')) {
-      res.status(404).json({
-        status: ResponseStatus.ERROR,
-        message: 'Product not found in order',
-      });
-      return;
-    }
-    if (errorMessage.includes('Quantity must be at least 1')) {
-      res
-        .status(400)
-        .json({ status: ResponseStatus.ERROR, message: errorMessage });
-      return;
-    }
-    if (errorMessage.includes('Insufficient stock')) {
-      res
-        .status(403)
-        .json({ status: ResponseStatus.ERROR, message: errorMessage });
-      return;
-    }
-    if (errorMessage.includes('Insufficient balance')) {
-      res
-        .status(403)
-        .json({ status: ResponseStatus.ERROR, message: errorMessage });
-      return;
-    }
+    if (replyWithHttpError(res, error)) return;
     next(error);
   }
 };
@@ -235,16 +195,8 @@ export const getUserOrders = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { userId } = req.params;
-
-  if (!userId) {
-    logger.warn('⚠️  Invalid request data', { userId });
-    res.status(400).json({
-      status: ResponseStatus.ERROR,
-      message: 'Invalid request data. userId is required.',
-    });
-    return;
-  }
+  const userId = requireUserId(req, res);
+  if (!userId) return;
 
   try {
     const orders = await OrderService.getOrdersByUserId(userId);
@@ -256,13 +208,9 @@ export const getUserOrders = async (
 
     res.status(200).json({
       status: ResponseStatus.SUCCESS,
-      data: orders,
+      data: orders.map(toPublicOrder),
     });
   } catch (error: unknown) {
-    const unknownError = new Error('Unknown error occurred');
-    const errorMessage =
-      error instanceof Error ? error.message : String(unknownError);
-
     logger.log({
       level: LOG_LEVEL.ERROR,
       scope: 'controller:orders',
@@ -271,41 +219,7 @@ export const getUserOrders = async (
       error,
     });
 
-    if (errorMessage.includes('User not found')) {
-      res
-        .status(404)
-        .json({ status: ResponseStatus.ERROR, message: 'User not found' });
-      return;
-    }
-    next(error);
-  }
-};
-
-export const getAllOrders = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const orders = await OrderService.getAllOrders();
-
-    logger.info('ℹ️  Orders retrieved successfully', {
-      orderCount: orders.length,
-    });
-
-    res.status(200).json({
-      status: ResponseStatus.SUCCESS,
-      data: orders,
-    });
-  } catch (error: unknown) {
-    logger.log({
-      level: LOG_LEVEL.ERROR,
-      scope: 'controller:orders',
-      message: '❌  Error retrieving orders',
-      requestInfo: getRequestInfo(req),
-      error,
-    });
-
+    if (replyWithHttpError(res, error)) return;
     next(error);
   }
 };

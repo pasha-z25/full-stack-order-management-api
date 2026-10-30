@@ -1,5 +1,7 @@
 import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
+import { moneyColumn } from '../money';
+
 @Entity('products')
 export class Product {
   @PrimaryGeneratedColumn('uuid')
@@ -8,7 +10,7 @@ export class Product {
   @Column({ type: 'varchar', nullable: false })
   title!: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
+  @Column(moneyColumn())
   price!: number;
 
   @Column({ type: 'text', nullable: false })
