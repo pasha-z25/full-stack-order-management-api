@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 
+import { ResponseStatus } from '@/types';
+
 export const rateLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
@@ -9,7 +11,7 @@ export const rateLimiter = rateLimit({
   },
   handler: (_req: Request, res: Response) => {
     res.status(429).json({
-      status: 'error',
+      status: ResponseStatus.ERROR,
       message: 'Too many requests, please try again later.',
     });
   },

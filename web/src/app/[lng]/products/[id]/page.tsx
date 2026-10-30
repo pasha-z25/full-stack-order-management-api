@@ -1,6 +1,7 @@
-import { fallbackLng } from '@/i18n/utils';
-import type { IPageProps } from '@/utils/types';
+import type { IPageProps } from '@utils/types';
+
 import { Loader } from '@components/UIElements';
+import { fallbackLng } from '@i18n/utils';
 import dynamic from 'next/dynamic';
 
 const DynamicProductPage = dynamic(() => import('../../../views/OneProduct'), {

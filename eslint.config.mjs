@@ -56,6 +56,18 @@ export default defineConfig([
       'react/react-in-jsx-scope': 'off',
     },
   },
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
   eslintConfigPrettier,
   globalIgnores(['web/.next/*', 'server/dist/*', 'node_modules/**']),
 ]);

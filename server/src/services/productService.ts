@@ -1,7 +1,7 @@
 import type { Repository } from 'typeorm';
 
-import { Product } from '@/db/entities';
-import { getRepository } from '@/db/repository';
+import { Product } from '@db/entities';
+import { getRepository } from '@db/repository';
 
 export class ProductService {
   private productRepository: Repository<Product> = getRepository(Product);
@@ -24,3 +24,5 @@ export class ProductService {
     }
   }
 }
+
+export default new ProductService();
